@@ -5,133 +5,20 @@ import { GUI }from "dat.gui";
 import * as SCENES from "./scenes/index.js";
 
 const Visualizer = () => {
-  const mount = useRef(null);
-  const controls = useRef(null);
+  const mount = useRef(null);  
+  const world = useRef({});
+  const [toolsEnabled, setToolsEnabled] = useState(false);
 
-  useEffect(() => {
-    let frameId, sceneId = 0, scenes;
-    let devMode = false;
+  // Initialize
+  useEffect( () => {
+    animate(build());
+  });
+
+  // Build a world
+  const build = () => {
     let width = mount.current.clientWidth;
     let height = mount.current.clientHeight;
-    var gui = new GUI();
-
-    const config = {
-      backgroundColor: new THREE.Color(0, 0, 0)
-    };
-
-    const animate = () => {
-      scenes.map(scene => {
-        scene.animate();
-        camera.lookAt(scene.scene.position);
-        devCamera.lookAt(scene.scene.position);
-      });
-
-      render();
-      frameId = window.requestAnimationFrame(animate);
-    };
-
-    const handleResize = () => {
-      width = mount.current.clientWidth;
-      height = mount.current.clientHeight;
-      renderer.setSize(width, height);
-
-      if (devMode)
-      {
-        camera.aspect = 0.5 * width / height;
-        devCamera.aspect = 0.5 * width / height;
-      }
-      else
-      {
-        camera.aspect = width / height;
-        devCamera.aspect = width / height;
-      }
-      
-      camera.updateProjectionMatrix();
-      devCamera.updateProjectionMatrix();
-      render();
-    };
-
-    const render = () => {
-      if (!devMode)
-      {
-        camera.aspect = width / height;
-        camera.updateProjectionMatrix();
-        renderer.setViewport(0, 0, width , height);
-        renderer.render(scenes[sceneId].scene, camera);
-      }
-      else
-      {
-        camera.aspect = 0.5 * width / height;
-        camera.updateProjectionMatrix();
-
-        devCamera.aspect = 0.5 * width / height;
-        devCamera.updateProjectionMatrix();
-        
-        renderer.setViewport(0, 0, width / 2 , height);
-        renderer.render(scenes[sceneId].scene, camera);
-        
-        renderer.setViewport(width / 2, 0, width / 2, height);
-        renderer.render(scenes[sceneId].scene, devCamera);
-      }
-    }
-
-    const toggleDevMode = () => {
-      const currentScene = scenes[sceneId].scene;
-      const helper = currentScene.getObjectByName("__cameraHelper");
-
-      if (helper == null)
-      {
-        currentScene.add(cameraHelper);
-        devMode = true;
-      }
-      else
-      {
-        currentScene.remove(helper);
-        devMode = false;
-      }
-
-      renderer.clear();
-    }
-
-    const setupGui = () => {
-      const cf = gui.addFolder("Camera");
-      cf.add(camera.position, "z", 0, 200, 5).name("Z").onChange(render);      
-    }
-
-    document.addEventListener(
-      "keydown",
-      event => {
-        switch (event.keyCode) {
-          case 32: // space
-            changeScene();
-            break;
-          case 39: // right
-            orbit.target.x++;
-            break;
-          case 37: // left
-            orbit.target.x--;
-            break;
-          case 38: // up
-            orbit.target.y++;
-            break;
-          case 40: // down
-            orbit.target.y--;
-            break;
-          case 65: // a
-            orbit.target.z++;
-            break;
-          case 90: // z
-            orbit.target.z--;
-            break;
-          case 72: //h
-            toggleDevMode();
-            break;
-          default:
-        }
-      },
-      false
-    );
-
+    
     const camera = new THREE.PerspectiveCamera(100, width / height, 1);
     camera.position.z = -5;
     camera.position.y = 0;
@@ -145,10 +32,10 @@ const Visualizer = () => {
     const cameraHelper = new THREE.CameraHelper(camera);
     cameraHelper.name = "__cameraHelper";
 
-    scenes = SCENES.Build();
+    const scenes = SCENES.build();
 
     const renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setClearColor(config.backgroundColor);
+    renderer.setClearColor(new THREE.Color(0, 0, 0));
     renderer.setSize(width, height);
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.autoClear = false;
@@ -157,29 +44,75 @@ const Visualizer = () => {
     orbit.target.set(0, 0, 0);
     orbit.update();
 
-    controls.current = { renderer, animate };
     mount.current.appendChild(renderer.domElement);
 
-    frameId = window.requestAnimationFrame(animate);
-    window.addEventListener("resize", handleResize);
-
-    setupGui();
-
-    const changeScene = () => {
-      if (sceneId > scenes.length - 2) sceneId = 0;
-      else sceneId++;
-  
-      window.cancelAnimationFrame(frameId);
-      frameId = window.requestAnimationFrame(controls.current.animate);
+    world.current = {
+        camera: camera,
+        devCamera: devCamera,
+        cameraHelper: cameraHelper,
+        renderer: renderer,
+        orbit: orbit,
+        scenes: scenes,
+        currentScene: 0,
+        frameId: 0
     };
+    
+    return world.current;
+  }
+
+  // Render the world
+  const render = (world) => {
+    const camera = world.camera; 
+    const devCamera = world.devCamera; 
+    const renderer = world.renderer;
+    const scenes = world.scenes;
+    const sceneId = world.currentScene;
+
+    const width = mount.current.clientWidth;
+    const height = mount.current.clientHeight;
+
+    if (!toolsEnabled)
+    {
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+      renderer.setViewport(0, 0, width , height);
+      renderer.render(scenes[sceneId].scene, camera);
+    }
+    else
+    {
+      camera.aspect = 0.5 * width / height;
+      camera.updateProjectionMatrix();
   
-    return () => {
-      window.cancelAnimationFrame(frameId);
-      document.removeEventListener("keydown");
-    };
-  }, []);
+      devCamera.aspect = 0.5 * width / height;
+      devCamera.updateProjectionMatrix();
+      
+      renderer.setViewport(0, 0, width / 2 , height);
+      renderer.render(scenes[sceneId].scene, camera);
+      
+      renderer.setViewport(width / 2, 0, width / 2, height);
+      renderer.render(scenes[sceneId].scene, devCamera);
+    }
+  }
+
+  // Animate the world
+  const animate = (w) => {
+    const camera = w.camera; 
+    const devCamera = w.devCamera; 
+    const scenes = w.scenes;
+
+    scenes.map(scene => {
+      scene.animate();
+      camera.lookAt(scene.scene.position);
+      devCamera.lookAt(scene.scene.position);
+    });
+
+    render(w);
+    w.frameId = window.requestAnimationFrame(() => { animate(w)} );
+  };
+
 
   return <div className="vis" ref={mount}></div>;
-};
+
+}
 
 export default Visualizer;

@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { brotliCompress } from 'zlib';
 
-export const Build = () => {
+export const build = () => {
     const cubeSize = .5;
     const cubePad = 5;
     const scene = new THREE.Scene();

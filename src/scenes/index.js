@@ -3,11 +3,11 @@ import * as flyingBox from './flyingBox';
 import * as flyingDiamond from './flyingDiamond';
 import * as cubeMadness from './cubeMadness';
 
-export const Build = () => {
+export const build = () => {
     return [
-        cubeMadness.Build(),
-        flyingBox.Build(),
-        flyingDiamond.Build(),
-        flyingSphere.Build(),
+        cubeMadness.build(),
+        flyingBox.build(),
+        flyingDiamond.build(),
+        flyingSphere.build(),
     ]
 }

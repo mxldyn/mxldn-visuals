@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 
-export const Build = () => {
+export const build = () => {
     const scene = new THREE.Scene();
     const basicMaterial = new THREE.MeshBasicMaterial({ color: '#1ff4bc', wireframe: true });
     const diamondGeometry = new THREE.OctahedronBufferGeometry(2, 1);
