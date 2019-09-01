@@ -6,19 +6,31 @@ import * as SCENES from "./scenes/index.js";
 
 const Visualizer = () => {
   const mount = useRef(null);  
-  const world = useRef({});
+  const world = useRef(null);
   const [toolsEnabled, setToolsEnabled] = useState(false);
 
   // Initialize
   useEffect( () => {
-    animate(build());
-  });
+    const width = mount.current.clientWidth;
+    const height = mount.current.clientHeight;
+    
+    world.current = build(width, height);
+    mount.current.appendChild(world.current.renderer.domElement);
+    
+    window.addEventListener("resize", () => {
+        handleResize(world.current, 
+            mount.current.clientWidth, 
+            mount.current.clientHeight);
+        render(world.current);
+    });
+
+    configureKeys(world.current);
+    render(world.current);
+  }, []);
 
   // Build a world
-  const build = () => {
-    let width = mount.current.clientWidth;
-    let height = mount.current.clientHeight;
-    
+  const build = (width, height) => {
+
     const camera = new THREE.PerspectiveCamera(100, width / height, 1);
     camera.position.z = -5;
     camera.position.y = 0;
@@ -44,9 +56,7 @@ const Visualizer = () => {
     orbit.target.set(0, 0, 0);
     orbit.update();
 
-    mount.current.appendChild(renderer.domElement);
-
-    world.current = {
+    return {
         camera: camera,
         devCamera: devCamera,
         cameraHelper: cameraHelper,
@@ -56,8 +66,6 @@ const Visualizer = () => {
         currentScene: 0,
         frameId: 0
     };
-    
-    return world.current;
   }
 
   // Render the world
@@ -68,8 +76,10 @@ const Visualizer = () => {
     const scenes = world.scenes;
     const sceneId = world.currentScene;
 
-    const width = mount.current.clientWidth;
-    const height = mount.current.clientHeight;
+    const vector = world.renderer.getSize(new THREE.Vector3(0,0,0));
+
+    const width = vector.x;
+    const height = vector.y;
 
     if (!toolsEnabled)
     {
@@ -95,10 +105,10 @@ const Visualizer = () => {
   }
 
   // Animate the world
-  const animate = (w) => {
-    const camera = w.camera; 
-    const devCamera = w.devCamera; 
-    const scenes = w.scenes;
+  const animate = (world) => {
+    const camera = world.camera; 
+    const devCamera = world.devCamera; 
+    const scenes = world.scenes;
 
     scenes.map(scene => {
       scene.animate();
@@ -106,10 +116,89 @@ const Visualizer = () => {
       devCamera.lookAt(scene.scene.position);
     });
 
-    render(w);
-    w.frameId = window.requestAnimationFrame(() => { animate(w)} );
+    render(world);
+    world.frameId = window.requestAnimationFrame(() => { animate(world)} );
   };
 
+  const handleResize = (world, width, height) => {
+    world.renderer.setSize(width, height);
+
+    if (toolsEnabled)
+    {
+        world.camera.aspect = 0.5 * width / height;
+        world.devCamera.aspect = 0.5 * width / height;
+    }
+    else
+    {
+        world.camera.aspect = width / height;
+        world.devCamera.aspect = width / height;
+    }
+    
+    world.camera.updateProjectionMatrix();
+    world.devCamera.updateProjectionMatrix();
+  };
+
+  const changeScene = (world) => {
+    if (world.currentScene > world.scenes.length - 2) world.currentScene = 0;
+    else world.currentScene++;
+};
+
+  const configureKeys = (world) =>{
+    document.addEventListener(
+      "keydown",
+      event => {
+        switch (event.keyCode) {
+          case 32: // space
+            changeScene(world);
+            break;
+          case 39: // right
+            world.orbit.target.x++;
+            break;
+          case 37: // left
+            world.orbit.target.x--;
+            break;
+          case 38: // up
+            world.orbit.target.y++;
+            break;
+          case 40: // down
+            world.orbit.target.y--;
+            break;
+          case 65: // a
+            world.orbit.target.z++;
+            break;
+          case 90: // z
+            world.orbit.target.z--;
+            break;
+          case 84: //t
+            toggleTools(world);
+            break;
+          default:
+        }
+      },
+      false
+    );  
+  };
+
+  const toggleTools = (world) => {
+    const scene = world.scenes[world.currentScene].scene;
+    const helper = scene.getObjectByName("__cameraHelper");
+
+    world.renderer.clear();
+
+    if (!helper)
+    {
+      scene.add(world.cameraHelper);
+      setToolsEnabled(true);
+    }
+    else
+    {
+      scene.remove(helper);
+      setToolsEnabled(false);
+    }
+  }
+
+  if (world.current)
+      animate(world.current);
 
   return <div className="vis" ref={mount}></div>;
 
