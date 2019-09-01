@@ -1,8 +1,8 @@
 import React, { useRef, useEffect, useState } from "react";
 import * as THREE from "three";
 import OrbitControls from "three-orbitcontrols";
+import { GUI }from "dat.gui";
 import * as SCENES from "./scenes/index.js";
-import { CameraHelper } from "three";
 
 const Visualizer = () => {
   const mount = useRef(null);
@@ -13,6 +13,7 @@ const Visualizer = () => {
     let devMode = false;
     let width = mount.current.clientWidth;
     let height = mount.current.clientHeight;
+    var gui = new GUI();
 
     const config = {
       backgroundColor: new THREE.Color(0, 0, 0)
@@ -92,6 +93,11 @@ const Visualizer = () => {
       renderer.clear();
     }
 
+    const setupGui = () => {
+      const cf = gui.addFolder("Camera");
+      cf.add(camera.position, "z", 0, 200, 5).name("Z").onChange(render);      
+    }
+
     document.addEventListener(
       "keydown",
       event => {
@@ -156,6 +162,8 @@ const Visualizer = () => {
 
     frameId = window.requestAnimationFrame(animate);
     window.addEventListener("resize", handleResize);
+
+    setupGui();
 
     const changeScene = () => {
       if (sceneId > scenes.length - 2) sceneId = 0;
