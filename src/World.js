@@ -4,7 +4,7 @@ import { GUI }from "dat.gui";
 import * as SCENES from "./scenes/index.js";
 
 // Build a world
-export const build = (width, height, pixelRatio) => {
+export const build = (width, height, pixelRatio, ) => {
 
     const camera = new THREE.PerspectiveCamera(100, width / height, 1);
     camera.position.z = -5;
@@ -79,7 +79,7 @@ export const render = (world) => {
     }
 }
 
-  // Animate the world
+// Animate the world
 export const animate = (world) => {
     const camera = world.camera; 
     const devCamera = world.devCamera; 

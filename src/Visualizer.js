@@ -1,13 +1,13 @@
 import React, { useRef, useEffect, useState } from "react";
 import * as WORLD from "./World.js";
 
-const Visualizer = () => {
+const Visualizer = (props) => {
   const mount = useRef(null);
   const frameId = useRef(null);
   const [world, setWorld] = useState(() => 
     WORLD.build(window.innerWidth, 
-      window.innerHeight, 
-      window.devicePixelRatio));
+        window.innerHeight, 
+        window.devicePixelRatio));
   const [running, setRunning] = useState(false);
 
   // Initialize
@@ -77,7 +77,7 @@ const Visualizer = () => {
   if (!running)
     start(world);
 
-  return <div className="vis" ref={mount}></div>;
+  return <div id={props.id} className="vis" ref={mount}></div>;
 }
 
 export default Visualizer;
