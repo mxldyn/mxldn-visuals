@@ -1,5 +1,4 @@
 import * as THREE from 'three';
-import { brotliCompress } from 'zlib';
 
 export const build = () => {
     const cubeSize = .5;
@@ -13,7 +12,7 @@ export const build = () => {
     scene.add(plane);
 
     const boxGeometry = new THREE.BoxBufferGeometry(cubeSize, cubeSize, cubeSize, 20, 20);
-    const boxes = [... new Array(10)]
+    const boxes = [...new Array(10)]
                     .map( (item, i) => {
                         const box = new THREE.Mesh(boxGeometry, basicMaterial);                        
                         box.position.set((i * cubeSize) + cubePad, 0, 0 );

@@ -42,33 +42,7 @@ const Visualizer = (props) => {
     document.addEventListener(
       "keydown",
       event => {
-        switch (event.keyCode) {
-          case 32: // space
-            WORLD.changeScene(world);
-            break;
-          case 39: // right
-            world.orbit.target.x++;
-            break;
-          case 37: // left
-            world.orbit.target.x--;
-            break;
-          case 38: // up
-            world.orbit.target.y++;
-            break;
-          case 40: // down
-            world.orbit.target.y--;
-            break;
-          case 65: // a
-            world.orbit.target.z++;
-            break;
-          case 90: // z
-            world.orbit.target.z--;
-            break;
-          case 84: //t
-            WORLD.toggleTools(world);
-            break;
-          default:
-        }
+        WORLD.processKeydown(world, event);
       },
       false
     );  

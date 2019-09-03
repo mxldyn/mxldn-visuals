@@ -1,6 +1,5 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import Split from 'react-split';
 import Visualizer from './Visualizer';
 
 import './index.css';
