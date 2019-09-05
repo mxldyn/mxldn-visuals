@@ -1,7 +1,10 @@
 import * as THREE from "three";
 import OrbitControls from "three-orbitcontrols";
+import CameraControls from "camera-controls"
 import { GUI } from "dat.gui";
 import * as SCENES from "./scenes/index.js";
+
+//CameraControls.install( { THREE: THREE } );
 
 // Build a world
 export const build = (width, height, pixelRatio, ) => {
@@ -30,10 +33,12 @@ export const build = (width, height, pixelRatio, ) => {
     renderer.autoClear = false;
 
     var orbit = new OrbitControls(camera, renderer.domElement);
-    orbit.target.set(0, 0, 0);
+    orbit.target.set(0, 5, 0);
+    orbit.enableDamping = true;
     orbit.update();
 
     return {
+        clock: new THREE.Clock(),
         camera: camera,
         devCamera: devCamera,
         cameraHelper: cameraHelper,
@@ -54,8 +59,9 @@ export const render = (world) => {
     const scenes = world.scenes;
     const sceneId = world.currentScene;
 
-    const vector = world.renderer.getSize(new THREE.Vector3(0,0,0));
+    //world.orbit.update();
 
+    const vector = world.renderer.getSize(new THREE.Vector3(0,0,0));
     const width = vector.x;
     const height = vector.y;
 
@@ -90,8 +96,8 @@ export const animate = (world) => {
 
     scenes.map(scene => {
       scene.animate();
-      camera.lookAt(scene.scene.position);
-      devCamera.lookAt(scene.scene.position);
+      //camera.lookAt(scene.scene.position);
+      devCamera.lookAt(camera.position);
       return true;
     });
 };
@@ -143,10 +149,17 @@ export const toggleTools = (world) => {
 const showGuiControls = (world) => {
     world.guiControls = new GUI();
     const cf = world.guiControls.addFolder("Camera");
-    cf.add(world.orbit.object.position, "x", -200, 200, 1).name("x").onChange(render(world)).listen();    
-    cf.add(world.orbit.object.position, "y", -200, 200, 1).name("y").onChange(render(world)).listen();    
-    cf.add(world.orbit.object.position, "z", -200, 200, 1).name("z").onChange(render(world)).listen();    
-    cf.add(world.orbit.object, "fov", 0, 1000, 1).name("fov").onChange(render(world)).listen();    
+    cf.add(world.camera.position, "x", -200, 200, 1).name("position.x").onChange(render(world)).listen();    
+    cf.add(world.camera.position, "y", -200, 200, 1).name("position.y").onChange(render(world)).listen();    
+    cf.add(world.camera.position, "z", -200, 200, 1).name("position.z").onChange(render(world)).listen();    
+    cf.add(world.camera.rotation, "x", -200, 200, 1).name("rotation.x").onChange(render(world)).listen();    
+    cf.add(world.camera.rotation, "y", -200, 200, 1).name("rotation.y").onChange(render(world)).listen();    
+    cf.add(world.camera.rotation, "z", -200, 200, 1).name("rotation.z").onChange(render(world)).listen();    
+    cf.add(world.camera, "fov", 0, 1000, 1).name("fov").onChange(render(world)).listen();
+    // const orf = world.guiControls.addFolder("Orbit");
+    // orf.add(world.orbit.target, "x", -200, 200, 1).name("x").onChange(render(world)).listen();    
+    // orf.add(world.orbit.target, "y", -200, 200, 1).name("y").onChange(render(world)).listen();    
+    // orf.add(world.orbit.target, "z", -200, 200, 1).name("z").onChange(render(world)).listen();  
 }
 
 const hideGuiControls = (world) => {
@@ -160,22 +173,22 @@ export const processKeydown = (world, event) => {
           changeScene(world);
           break;
         case 39: // right
-          world.orbit.target.x++;
+          world.camera.position.x++;
           break;
         case 37: // left
-          world.orbit.target.x--;
+          world.camera.position.x--;
           break;
         case 38: // up
-          world.orbit.target.y++;
+          world.camera.position.y++;
           break;
         case 40: // down
-          world.orbit.target.y--;
+          world.camera.position.y--;
           break;
         case 65: // a
-          world.orbit.target.z++;
+          world.camera.position.z++;
           break;
         case 90: // z
-          world.orbit.target.z--;
+          world.camera.position.z--;
           break;
         case 84: //t
           toggleTools(world);
